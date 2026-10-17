@@ -1,0 +1,94 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: finance
+      POSTGRES_PASSWORD: finance_dev
+      POSTGRES_DB: finance
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finance -d finance"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  airflow-init:
+    profiles: [orchestration]
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment: &airflow_environment
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://finance:finance_dev@postgres:5432/airflow
+      AIRFLOW__WEBSERVER__SECRET_KEY: local_dev_only_change_me
+      DATABASE_URL: postgresql://finance:finance_dev@postgres:5432/finance
+      START_DATE: "2024-01-01"
+      PYTHONPATH: /opt/airflow/app/src
+      RAW_DIR: /opt/airflow/app/data/raw
+    volumes: &airflow_volumes
+      - ./:/opt/airflow/app
+    working_dir: /opt/airflow/app
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate &&
+        (airflow users create --username admin --password admin --firstname Finance --lastname Dev --role Admin --email admin@example.com || true)
+
+  airflow-scheduler:
+    profiles: [orchestration]
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    environment: *airflow_environment
+    volumes: *airflow_volumes
+    working_dir: /opt/airflow/app
+    command: scheduler
+
+  airflow-webserver:
+    profiles: [orchestration]
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    environment: *airflow_environment
+    volumes: *airflow_volumes
+    working_dir: /opt/airflow/app
+    command: webserver
+    ports:
+      - "8080:8080"
+
+  dbt:
+    profiles: [transformation]
+    build:
+      context: .
+      dockerfile: Dockerfile.dbt
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DBT_HOST: postgres
+      DBT_USER: finance
+      DBT_PASSWORD: finance_dev
+      DBT_DB: finance
+      DBT_PROFILES_DIR: /app/dbt
+    volumes:
+      - ./:/app
+    working_dir: /app
+    command: ["dbt", "build", "--project-dir", "/app/dbt", "--profiles-dir", "/app/dbt"]
+
+volumes:
+  pg_data:
