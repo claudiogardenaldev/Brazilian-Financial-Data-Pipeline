@@ -1,0 +1,19 @@
+version: 2
+models:
+  - name: stg_sgs_observations
+    description: Observações normalizadas vindas da API SGS.
+    columns:
+      - name: series_code
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [1, 433, 1178]
+      - name: observed_on
+        data_tests: [not_null]
+      - name: value
+        data_tests: [not_null]
+  - name: mart_monthly_financial_indicators
+    description: Séries mensais alinhadas para relatórios Power BI.
+    columns:
+      - name: month
+        data_tests: [unique, not_null]
