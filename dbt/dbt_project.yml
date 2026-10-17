@@ -1,0 +1,9 @@
+name: brazilian_financial_data
+version: '1.0.0'
+config-version: 2
+profile: financial_pipeline
+model-paths: ["models"]
+clean-targets: ["target", "dbt_packages"]
+models:
+  brazilian_financial_data:
+    +materialized: view
