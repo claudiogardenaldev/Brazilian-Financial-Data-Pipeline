@@ -222,19 +222,6 @@ Brazilian-Financial-Data-Pipeline/
 └── README.md
 ```
 
-## 07 / Ideias para Power BI
-
-Depois da carga e do `dbt build`, conecte o Power BI ao PostgreSQL em `localhost:5432`, banco `finance`, tabela `analytics.mart_monthly_financial_indicators`.
-
-**Sugestões de visuais:** histórico da SELIC, IPCA mensal, dólar médio por mês, variação do câmbio em relação ao mês anterior e tabela mensal com os três indicadores. O repositório **não contém um arquivo PBIX pronto**.
-
-## 08 / Melhorias futuras
-
-- [ ] Incluir dbt como etapa dependente da ingestão na DAG;
-- [ ] Adicionar testes de integração com PostgreSQL em ambiente de CI;
-- [ ] Gerar dashboard Power BI e publicar capturas;
-- [ ] Monitorar atraso de atualização e qualidade das séries;
-- [ ] Externalizar segredos e tornar a infraestrutura adequada à produção.
 
 ---
 
