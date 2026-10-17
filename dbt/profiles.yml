@@ -1,0 +1,12 @@
+financial_pipeline:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('DBT_HOST', 'localhost') }}"
+      port: 5432
+      user: "{{ env_var('DBT_USER', 'finance') }}"
+      pass: "{{ env_var('DBT_PASSWORD', 'finance_dev') }}"
+      dbname: "{{ env_var('DBT_DB', 'finance') }}"
+      schema: analytics
+      threads: 2
